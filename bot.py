@@ -1,5 +1,5 @@
 import logging
-from telegram import Update
+from telegram import Application
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
 # Telegram Bot Token (Make sure it's stored securely)
