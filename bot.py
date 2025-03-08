@@ -1,53 +1,37 @@
-import requests
-from telegram.ext import Updater, CommandHandler
-import openai
-from bs4 import BeautifulSoup
+import logging
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
-# Configuration
-TELEGRAM_TOKEN = "7418409797:AAEiO6OWdmjyIkjV89PTJDNaUc1uGGErrcY"
-OPENAI_API_KEY = "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"
-openai.api_key = OPENAI_API_KEY
+# Telegram Bot Token (Make sure it's stored securely)
+import os
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-# Scrape Betking Virtual Football League
-def scrape_betking_vfl():
-    url = "https://m.betking.com/virtual/league"
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    matches = soup.find_all('div', {'data-testid': 'match-content'})
-    match_data = []
+# Set up logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
-    for match in matches:
-        teams = match.find_all('div', {'class': 'home-team'})[0].text.strip() + " vs " + match.find_all('div', {'class': 'away-team'})[0].text.strip()
-        odds = match.find_all('span', {'data-testid': 'match-odd-value'})
-        if odds and len(odds) >= 2:
-            match_data.append(f"{teams} | Over: {odds[0].text.strip()} | Under: {odds[1].text.strip()}")
+# Start command function
+async def start(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text("✅ Hello! Your bot is now active and working!")
 
-    return "\n".join(match_data)
-
-# GPT-4 Turbo Prediction
-def get_predictions(matches):
-    prompt = f"Predict matches likely to end over 3.5 goals based on these fixtures:\n{matches}"
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=150
-    )
-    return response.choices[0].message.content.strip()
-
-# Telegram Bot Commands
-def start(update, context):
-    matches = scrape_betking_vfl()
-    prediction = get_predictions(matches)
-    update.message.reply_text(f"Today's Predictions:\n{prediction}")
+# Basic message handler
+async def echo(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text(f"You said: {update.message.text}")
 
 def main():
-    updater = Updater(TELEGRAM_TOKEN, use_context=True)
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler('start', start))
+    """Start the bot"""
+    app = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    updater.start_polling()
-    updater.idle()
+    # Command Handlers
+    app.add_handler(CommandHandler("start", start))
 
-if __name__ == '__main__':
+    # Message Handlers
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
+    print("🚀 Bot is running...")
+    app.run_polling()
+
+if __name__ == "__main__":
     main()
