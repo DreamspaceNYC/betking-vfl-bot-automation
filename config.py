@@ -1,0 +1,3 @@
+* config.py: (Add your keys safely)
+OPENAI_API_KEY = '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'
+TELEGRAM_BOT_TOKEN = '7418409797:AAEiO6OWdmjyIkjV89PTJDNaUc1uGGErrcY'
